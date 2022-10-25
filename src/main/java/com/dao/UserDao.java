@@ -11,7 +11,18 @@ import static java.lang.Class.forName;
 public class UserDao {
 
     // UseDao에서 인터페이스 ConnectionMaker 사용하게 변경
-    ConnectionMaker connectionMaker;
+    private ConnectionMaker connectionMaker;
+
+    public UserDao() {
+        this.connectionMaker = new AWSConnectionMaker();
+    }
+
+    // 💁🏻‍♀️constructor 오버로딩
+    // test에서 connection 못쓰나?
+    // 왜 생성자 두개나?
+    public UserDao(ConnectionMaker connectionMaker) {
+        this.connectionMaker = connectionMaker;
+    }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
         Connection conn = null;
