@@ -10,13 +10,14 @@ import static java.lang.Class.forName;
 
 public class UserDao {
 
-    UserDao userDao;
+    // UseDao에서 인터페이스 ConnectionMaker 사용하게 변경
+    ConnectionMaker connectionMaker;
 
     public void add(User user) throws ClassNotFoundException, SQLException {
         Connection conn = null;
         PreparedStatement ps = null;
         try {
-            conn = connectionMaker();
+            conn = connectionMaker.makeConnection();
             ps = conn.prepareStatement("INSERT INTO lastusers(id, name, password) VALUES (?,?,?)");
             ps.setString(1, user.getId());
             ps.setString(2, user.getName());
@@ -42,7 +43,7 @@ public class UserDao {
         ResultSet rs = null;
         User user;
         try {
-            conn = connectionMaker();
+            conn = connectionMaker.makeConnection();
             ps = conn.prepareStatement("SELECT id, name, password FROM lastusers WHERE id = ?");
             ps.setString(1, id);
             rs = ps.executeQuery(); // 조회문
@@ -67,7 +68,7 @@ public class UserDao {
         ResultSet rs = null;
         List<User> userList = null;
         try {
-            conn = connectionMaker();
+            conn = connectionMaker.makeConnection();
             ps = conn.prepareStatement("SELECT * FROM lastusers");
 
             rs = ps.executeQuery(); // 조회문
@@ -93,7 +94,7 @@ public class UserDao {
         Connection conn = null;
         PreparedStatement ps = null;
         try {
-            conn = connectionMaker();
+            conn = connectionMaker.makeConnection();
             ps = conn.prepareStatement("DELETE FROM lastusers");
 
             ps.executeUpdate();
@@ -113,7 +114,7 @@ public class UserDao {
         ResultSet rs = null;
         int cnt = 0;
         try {
-            conn = connectionMaker();
+            conn = connectionMaker.makeConnection();
             ps = conn.prepareStatement("select count(*) from lastusers");
             rs = ps.executeQuery(); // 조회문
             while (rs.next()) {
@@ -132,20 +133,4 @@ public class UserDao {
         return cnt;
     }
 
-    public Connection connectionMaker() throws ClassNotFoundException, SQLException {
-        Map<String, String> env = System.getenv();
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection conn = DriverManager.getConnection(env.get("DB_HOST"), env.get("DB_USER"), env.get("DB_PASSWORD"));
-        return conn;
-    }
-
-    public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        UserDao userDao = new UserDao();
-//        userDao.add();
-//        User user = userDao.findById("2");
-//        userDao.add(new User("4", "rara", "3435"));
-//        System.out.println(user.getId());
-//        System.out.println(user.getName());
-//        System.out.println(user.getPassword());
-    }
 }
