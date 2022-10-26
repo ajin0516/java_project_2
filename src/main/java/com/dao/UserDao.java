@@ -25,28 +25,27 @@ public class UserDao {
         this.connectionMaker = connectionMaker;
     }
 
-    public void add(User user) throws ClassNotFoundException, SQLException {
+    public void jdbcContextWithStatementStrategy(StatementStrategy statementStrategy) throws SQLException {
         Connection conn = null;
         PreparedStatement ps = null;
         try {
             conn = connectionMaker.makeConnection();
-            ps = new AddStrategy().makePreparedStatement(conn);
-            ps.setString(1, user.getId());
-            ps.setString(2, user.getName());
-            ps.setString(3, user.getPassword());
-
+            ps = statementStrategy.makePreparedStatement(conn);
             ps.executeUpdate();
-
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         } finally {
+            if (ps != null) {
+                ps.close();
+            } else if (conn != null)
+                conn.close();
         }
-        if (ps != null) {
-            ps.close();
-        } else if (conn != null)
-            conn.close();
     }
 
+
+    public void add(User user) throws ClassNotFoundException, SQLException {
+        jdbcContextWithStatementStrategy(new AddStrategy(user));
+    }
     // 타입을 User로 설정해서 값을 User객체에서 받기
     // id로 해당 행 찾기
     public User findById(String id) throws ClassNotFoundException, SQLException {
@@ -110,21 +109,7 @@ public class UserDao {
     }
 
     public void deleteAll() throws ClassNotFoundException, SQLException {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        try {
-            conn = connectionMaker.makeConnection();
-            ps = new DeleteAllStrategy().makePreparedStatement(conn);
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (ps != null) {
-                ps.close();
-            } else if (conn != null)
-                conn.close();
-        }
+        jdbcContextWithStatementStrategy(new DeleteAllStrategy());
     }
 
     public int count() throws ClassNotFoundException, SQLException {
