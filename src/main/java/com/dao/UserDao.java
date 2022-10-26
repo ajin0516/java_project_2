@@ -1,6 +1,7 @@
 package com.dao;
 
 import domain.User;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.sql.*;
 import java.util.List;
@@ -29,7 +30,7 @@ public class UserDao {
         PreparedStatement ps = null;
         try {
             conn = connectionMaker.makeConnection();
-            ps = conn.prepareStatement("INSERT INTO lastusers(id, name, password) VALUES (?,?,?)");
+            ps = new AddStrategy().makePreparedStatement(conn);
             ps.setString(1, user.getId());
             ps.setString(2, user.getName());
             ps.setString(3, user.getPassword());
@@ -52,7 +53,7 @@ public class UserDao {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        User user;
+        User user = null;
         try {
             conn = connectionMaker.makeConnection();
             ps = conn.prepareStatement("SELECT id, name, password FROM lastusers WHERE id = ?");
@@ -60,6 +61,7 @@ public class UserDao {
             rs = ps.executeQuery(); // 조회문
             rs.next();
             user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -69,6 +71,9 @@ public class UserDao {
                 ps.close();
             } else if (conn != null)
                 conn.close();
+        }
+        if(user == null){
+            throw new EmptyResultDataAccessException(1);  // 왜 1을?
         }
         return user;
     }
@@ -98,6 +103,9 @@ public class UserDao {
             } else if (conn != null)
                 conn.close();
         }
+        if(userList == null){
+            throw new EmptyResultDataAccessException(0);  // 왜 1을?
+        }
         return userList;
     }
 
@@ -106,7 +114,7 @@ public class UserDao {
         PreparedStatement ps = null;
         try {
             conn = connectionMaker.makeConnection();
-            ps = conn.prepareStatement("DELETE FROM lastusers");
+            ps = new DeleteAllStrategy().makePreparedStatement(conn);
 
             ps.executeUpdate();
         } catch (SQLException e) {
